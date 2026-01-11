@@ -33,6 +33,16 @@ class BSModel:
         
         return price
     
+    @staticmethod
+    def european_payoff(S_T, K, option_type='call'):
+        if option_type == 'call':
+            payoff = np.maximum(S_T - K, 0)
+        elif option_type == 'put':
+            payoff = np.maximum(K - S_T, 0)
+        else:
+            raise ValueError("option_type must be 'call' or 'put'")
+        return payoff
+    
     def european_price(self, option_type='call'):
         price = self.BSFormula(self.S0, self.K, self.T, self.r, self.sigma, option_type)
         return price
@@ -145,8 +155,11 @@ class BSModel:
     def plot_european_price_vs_spot(self, option_type='call', spot_range=(50, 150), num_points=100):
         spots = np.linspace(spot_range[0], spot_range[1], num_points)
         prices = [self.BSFormula(S, self.K, self.T, self.r, self.sigma, option_type) for S in spots]
+        payoffs = [self.european_payoff(S, self.K, option_type) for S in spots]
         
         plt.plot(spots, prices, label=f'{option_type.capitalize()} Option Price')
+        plt.plot(spots, payoffs, label=f'{option_type.capitalize()} Option Payoff', linestyle='--')
+        plt.plot(self.K, self.BSFormula(self.K, self.K, self.T, self.r, self.sigma, option_type), 'ro', label='ATM Price')
         plt.xlabel('Spot Price')
         plt.ylabel('Option Price')
         plt.title(f'European {option_type.capitalize()} Option Price vs Spot Price')
@@ -159,6 +172,7 @@ class BSModel:
         greeks = [self.BSGreeks(greek, 'call', S, self.K, self.T, self.r, self.sigma) for S in spots]
         
         plt.plot(spots, greeks, label=f'{greek.capitalize()} (Call)')
+        plt.plot(self.K, self.BSGreeks(greek, 'call', self.K, self.K, self.T, self.r, self.sigma), 'ro', label=f'ATM {greek.capitalize()}')
         plt.xlabel('Spot Price')
         plt.ylabel(f'{greek.capitalize()}')
         plt.title(f'European Call Option {greek.capitalize()} vs Spot Price')
@@ -191,7 +205,7 @@ if __name__ == "__main__":
     model.plot_european_price_vs_spot(option_type='call')
     model.plot_european_price_vs_spot(option_type='put')
     
-    model.plot_greeks_vs_spot(greek='delta')
-    model.plot_greeks_vs_strike(greek='delta', strike_range=(50, 200))
+    for greek in ['delta', 'gamma', 'vega', 'theta', 'rho']:
+        model.plot_greeks_vs_spot(greek=greek, spot_range=(50, 200))
     
     
