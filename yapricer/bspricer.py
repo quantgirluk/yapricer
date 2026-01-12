@@ -179,6 +179,31 @@ class BSModel:
         plt.legend()
         plt.grid()
         plt.show()
+    
+    def plot_greeks_vs_timeto_maturity(self, option_type='call', greek='delta', T_range=(0.01, 1.0), num_points=100):
+        
+        fig, ax = plt.subplots()
+        
+        T_values = np.linspace(T_range[0], T_range[1], num_points)
+        if option_type in ['call', 'put']:
+            greeks = [self.BSGreeks(greek, option_type, self.S0, self.K, T, self.r, self.sigma) for T in T_values]
+            ax.plot(T_values, greeks, label=f'{greek.capitalize()} ({option_type.capitalize()})')
+        elif option_type == 'both':
+            greeks_call = [self.BSGreeks(greek, 'call', self.S0, self.K, T, self.r, self.sigma) for T in T_values]
+            greeks_put = [self.BSGreeks(greek, 'put', self.S0, self.K, T, self.r, self.sigma) for T in T_values]
+            ax.plot(T_values, greeks_call, label=f'{greek.capitalize()} (Call)')
+            ax.plot(T_values, greeks_put, label=f'{greek.capitalize()} (Put)')
+        else:
+            raise ValueError("option_type must be 'call', 'put', or 'both'")
+        
+        ax.set_xlabel('Time to Maturity')
+        ax.set_ylabel(f'{greek.capitalize()}')
+        ax.set_title(f'European Option {greek.capitalize()} vs Time to Maturity')
+        ax.legend()
+        ax.grid()
+        ax.invert_xaxis()
+        plt.show()
+        return fig
         
     
     def plot_greeks_vs_strike(self, greek='delta', strike_range=(50, 150), num_points=100):
@@ -195,17 +220,18 @@ class BSModel:
         
 if __name__ == "__main__":
     # Example usage
-    model = BSModel(spot=100, K=100, T=1.0, r=0.05, sigma=0.2)
+    model = BSModel(spot=100, K=105, T=1.0, r=0.05, sigma=0.2)
     call_price = model.european_price(option_type='call')
     put_price = model.european_price(option_type='put')
     
     print(f'Call Option Price: {call_price}')
     print(f'Put Option Price: {put_price}')
     
-    model.plot_european_price_vs_spot(option_type='call')
-    model.plot_european_price_vs_spot(option_type='put')
+    # model.plot_european_price_vs_spot(option_type='call')
+    # model.plot_european_price_vs_spot(option_type='put')
     
     for greek in ['delta', 'gamma', 'vega', 'theta', 'rho']:
-        model.plot_greeks_vs_spot(greek=greek, spot_range=(50, 200))
-    
+        # model.plot_greeks_vs_spot(greek=greek, spot_range=(50, 200))
+        model.plot_greeks_vs_timeto_maturity(option_type='both', greek=greek, T_range=(0.01, 2.0))
+        # model.plot_greeks_vs_timeto_maturity(option_type='call', greek=greek, T_range=(0.0, 2.0))
     
